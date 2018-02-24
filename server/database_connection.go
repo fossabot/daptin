@@ -7,9 +7,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	//"github.com/casbin/xorm-adapter"
 	//"github.com/casbin/casbin"
+	"log"
 )
 
 func GetDbConnection(dbType string, connectionString string) (*sqlx.DB, error) {
+	log.Printf("Acquire connection from database [%v][%v]", dbType, connectionString)
 	return sqlx.Open(dbType, connectionString)
 }
 //

@@ -11,20 +11,18 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
-	"net"
 	"net/http"
-	"sync"
 	"github.com/thoas/stats"
 	"github.com/daptin/daptin/server/websockets"
 	"github.com/artpar/rclone/fs/config"
+	"github.com/cenkalti/httpagain"
 )
 
 var Stats = stats.New()
 
 var cruds = make(map[string]*resource.DbResource)
 
-func Main(boxRoot, assetsStatic http.FileSystem, db *sqlx.DB, wg *sync.WaitGroup, l net.Listener, ch chan struct{}) {
-	defer wg.Done()
+func Main(boxRoot, assetsStatic http.FileSystem, db *sqlx.DB) {
 
 	//configFile := "daptin_style.json"
 	/// Start system initialise
@@ -213,16 +211,15 @@ func Main(boxRoot, assetsStatic http.FileSystem, db *sqlx.DB, wg *sync.WaitGroup
 	//r.Run(fmt.Sprintf(":%v", *port))
 	CleanUpConfigFiles()
 
-	go func() {
-		err = http.Serve(l, hostSwitch)
-		resource.CheckErr(err, "Failed to listen")
-	}()
-
-	select {
-	case <-ch:
-		return
-	default:
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: hostSwitch,
 	}
+	httpagain.ListenAndServe(":8080", server)
+	//go func() {
+	//	resource.CheckErr(err, "Failed to listen")
+	//}()
+	//log.Printf("Main server process ending")
 
 }
 func MergeTables(existingTables []resource.TableInfo, initConfigTables []resource.TableInfo) []resource.TableInfo {
